@@ -1,0 +1,165 @@
+% =========================================================================
+% METHODOLOGY AND RESULTS SECTIONS FOR SURVEY-BASED EWS IN CAMBODIA
+% Save this as methodology_and_results.tex
+% =========================================================================
+
+\documentclass[12pt,journal,compsoc]{IEEEtran}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{cite}
+
+\begin{document}
+
+% =========================================================================
+% SECTION 3: METHODOLOGY (CONTINUED)
+% =========================================================================
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Feature Engineering}
+\label{subsec:feature_engineering}
+To improve the predictive capacity of the machine learning algorithms, raw categorical survey inputs were synthesized into five composite indices. These engineered features are theoretically grounded in the IAFREE relational model \cite{vasconcelos2023iafree} and Cambodia-specific educational risk drivers \cite{kreng2016school}. The mathematical formulations of these features are described below:
+
+\begin{enumerate}
+    \item \textbf{Attendance Quality ($AQ$)}: Attendance and absences are inversely related indicators of student disengagement. We define attendance quality as:
+    \begin{equation}
+        AQ = x_{\text{attendance}} - x_{\text{absence}}
+    \end{equation}
+    where $x_{\text{attendance}}$ represents the encoded weekly attendance range and $x_{\text{absence}}$ represents the absence frequency. A lower score signifies chronic truancy.
+    
+    \item \textbf{Engagement Score ($ES$)}: Combining physical presence with academic performance yields a multi-dimensional metric of student engagement:
+    \begin{equation}
+        ES = x_{\text{attendance}} + x_{\text{monthly\_average}} - x_{\text{absence}}
+    \end{equation}
+    where $x_{\text{monthly\_average}}$ represents the average monthly academic performance tier.
+    
+    \item \textbf{Socioeconomic Status (SES) Score ($SES$)}: Captures household financial and intellectual capital:
+    \begin{equation}
+        SES = x_{\text{family\_income}} + x_{\text{parental\_education}} + x_{\text{external\_support}}
+    \end{equation}
+    where $x_{\text{family\_income}}$ indicates household income levels, $x_{\text{parental\_education}}$ represents the maximum parental educational attainment, and $x_{\text{external\_support}}$ indicates access to external aid.
+    
+    \item \textbf{Support Index ($SI$)}: Reflects the strength of the student's immediate protective environment:
+    \begin{equation}
+        SI = x_{\text{living\_with}} + x_{\text{external\_support}} + x_{\text{parental\_education}}
+    \end{equation}
+    where $x_{\text{living\_with}}$ represents whether the student resides with both parents, a single parent, or guardians/relatives.
+    
+    \item \textbf{Commute Burden ($CB$)}: Reflects physical barriers to school access, which are highly critical in rural Cambodian infrastructures:
+    \begin{equation}
+        CB = x_{\text{distance}} + x_{\text{transport}}
+    \end{equation}
+    where $x_{\text{distance}}$ measures distance to school and $x_{\text{transport}}$ indicates the means of transportation.
+\end{enumerate}
+
+\subsection{Modeling Setup}
+\label{subsec:modeling_setup}
+To construct the Early Warning System, eight distinct classification algorithms were evaluated: Logistic Regression, Support Vector Machines (SVM), Decision Trees, Random Forests, Extra Trees, Gradient Boosting, XGBoost, and LightGBM. Additionally, a Soft Voting Ensemble was developed to aggregate predictions across the top-performing models.
+
+The training and validation workflow was executed using a 5-fold Stratified Cross-Validation (CV) framework to preserve class distribution proportions. Crucially, to prevent data leakage and optimistic bias, the Synthetic Minority Over-sampling Technique (SMOTE) was applied \textit{exclusively} within the training folds during each CV iteration, leaving the validation folds untouched. 
+
+\subsection{Evaluation Metrics}
+\label{subsec:evaluation_metrics}
+Given the highly imbalanced nature of the dataset ($N=556$), evaluating models based solely on Accuracy is misleading. In an educational EWS context, missing an at-risk student (False Negative) has a significantly higher societal and individual cost than falsely flaggering a student who remains in school (False Positive). Therefore, Recall was designated as the primary optimization metric, supported by F1-Score, Accuracy, and the Area Under the Receiver Operating Characteristic curve (ROC-AUC). The metrics are mathematically formulated as:
+
+\begin{equation}
+    \text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}
+\end{equation}
+
+\begin{equation}
+    \text{Recall (Sensitivity)} = \frac{TP}{TP + FN}
+\end{equation}
+
+\begin{equation}
+    \text{Precision} = \frac{TP}{TP + FP}
+\end{equation}
+
+\begin{equation}
+    \text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}
+\end{equation}
+where $TP$, $TN$, $FP$, and $FN$ represent True Positives, True Negatives, False Positives, and False Negatives, respectively.
+
+% =========================================================================
+% SECTION 4: RESULTS AND DISCUSSION
+% =========================================================================
+\section{Results and Discussion}
+\label{sec:results_discussion}
+
+\subsection{Performance Analysis of SMOTE + SVM}
+\label{subsec:svm_performance}
+The experimental results revealed that the combination of SMOTE resampling with a Support Vector Machine (SVM) classifier yielded the most balanced performance for identifying students at risk of dropout. The model achieved an overall Accuracy of 0.72, a minority class Recall of 0.36, and an ROC-AUC of 0.69. 
+
+An Accuracy of 0.72 indicates that the model successfully classifies approximately 72\% of the students in the validation sets. However, the Recall of 0.36 reveals a significant limitation: the system only identifies 36\% of the students who actually express dropout intentions, leaving 64\% undetected (False Negatives). Despite this limitation, the SVM outperforms tree-based models on the minority class, as the oversampled decision boundaries in SVM construct a more generalized separating hyperplane compared to the rigid axis-aligned splits of decision trees in highly skewed, low-dimensional feature spaces.
+
+\subsection{Discussion of Modest Recall Performance}
+\label{subsec:recall_discussion}
+Several factors contribute to the modest Recall of 0.36 observed in this survey-driven framework:
+\begin{enumerate}
+    \item \textbf{Social Desirability and Self-Reporting Bias}: The survey target variable, \textit{thought\_dropout}, is self-reported. In Cambodian culture, dropping out of school is often stigmatized or associated with family economic failure \cite{kreng2016school}. Consequently, students experiencing high dropout risk may underreport their true intentions, introducing noise and label contamination into the positive class.
+    \item \textbf{Overlapping Class Boundaries}: The physical realities of rural Cambodian lower secondary students (long distances, low incomes, and parental seasonal migration) are common across both dropout-risk and non-dropout groups. This creates heavy overlap in the feature space, making it difficult for SVM hyperplanes to isolate the minority class.
+    \item \textbf{Lack of Continuous Behavioral Indicators}: Unlike Learning Management System (LMS) logs used in online EWS \cite{marcolino2025catboost}, which capture real-time student activities, the offline survey captures static self-reports. This lack of temporal granularity restricts the model's capacity to detect acute dips in engagement.
+\end{enumerate}
+
+\subsection{Comparison with Literature}
+\label{subsec:literature_comparison}
+Our findings align with and contribute to the broader discourse on educational predictive analytics. Compared to the administrative EWS model developed by Heredia-Jimenez et al. (2020), which achieved higher recalls ($>0.80$) using institutional histories, our survey-driven model operates under severe data constraints. However, it represents a crucial alternative for offline, resource-constrained schools where central databases do not exist, similar to the Moroccan context studied by Skittou et al. (2024).
+
+Furthermore, the integration of SHAP explainability addresses the ``black-box'' criticism of machine learning models highlighted by Alameri (2025). By translating model coefficients into local, student-level risk factors (e.g., commute burden, weak support environment), our system bridges the gap between predictive modeling and actionable service-learning interventions advocated by Arco-Tirado et al. (2025).
+
+% =========================================================================
+% SECTION 5: SURVEY ITEM MAPPING
+% =========================================================================
+\section{Survey Item Mapping and Theoretical Framework}
+\label{sec:survey_mapping}
+The 16 survey items utilized in this study were mapped to the IAFREE relational dimensions \cite{vasconcelos2023iafree} and aligned with Cambodia-specific dropout risk factors identified in literature \cite{kreng2016school}. Table~\ref{tab:survey_mapping} provides the details of this integration.
+
+\begin{table*}[t]
+\centering
+\caption{Mapping of Survey Features to IAFREE Dimensions and Cambodian Risk Factors}
+\label{tab:survey_mapping}
+\begin{tabular}{lp{4cm}p{4cm}p{4cm}}
+\toprule
+\textbf{Feature} & \textbf{Survey Item / Description} & \textbf{IAFREE Dimension} & \textbf{Cambodian Context / Risk Factor} \\
+\midrule
+\texttt{gender} & Student's gender (Male/Female/Other) & Individual & Gendered household chore expectations and agricultural labor demands. \\
+\texttt{age} & Age of the student & Individual & Over-age enrollment increases dropout risk due to peer mismatch and opportunity costs. \\
+\texttt{province} & Province of school & Environmental Context & Regional infrastructure disparities and seasonal agricultural patterns. \\
+\texttt{living\_with} & Living arrangements during school & Family Relation & Impact of parental migration; many students live with elderly relatives. \\
+\texttt{distance} & Distance from home to school & External/Community & Inadequate road networks; long travel during the rainy season prevents attendance. \\
+\texttt{transport} & Primary means of transportation & External/Community & Cost and accessibility of vehicles (bicycles, motorbikes). \\
+\texttt{attendance} & Weekly attendance days & Academic Relation & Direct behavioral indicator of school disengagement. \\
+\texttt{monthly\_avg} & Average monthly academic performance & Academic Relation & Low academic self-efficacy and fear of failing exams. \\
+\texttt{absence} & Frequency of missed school days & Academic Relation & Accumulated learning gaps leading to passive dropout. \\
+\texttt{parent\_edu} & Highest parental education level & Family Relation & Limited parental literacy restricts homework support and guidance. \\
+\texttt{fam\_income} & Subjective household income tier & Economic/Work & Direct constraint; inability to pay for informal school fees. \\
+\texttt{work\_support} & Student works to support family & Economic/Work & Labor migration or agricultural labor during harvest seasons. \\
+\texttt{external\_sup} & Receives external financial/material aid & Economic/Work & Impact of targeted scholarships or NGO intervention programs. \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% =========================================================================
+% SECTION 6: RECCOMENDATIONS FOR RECALL IMPROVEMENT
+% =========================================================================
+\section{Proposed Enhancements for Model Recall}
+\label{sec:recall_enhancements}
+To address the modest minority class Recall of 0.36, several advanced pipeline modifications are proposed:
+\begin{enumerate}
+    \item \textbf{Decision Threshold Tuning}: Shift the classification threshold from the default 0.50 to a lower boundary (e.g., 0.30) using ROC-AUC optimization. This increases the sensitivity of the early warning flag, catching a larger proportion of at-risk students.
+    \item \textbf{Cost-Sensitive SVM (Weighted SVM)}: Introduce class-specific penalty parameters ($C$) in the SVM objective function:
+    \begin{equation}
+        \min_{w, b, \xi} \frac{1}{2} \|w\|^2 + C^+ \sum_{i \in I^+} \xi_i + C^- \sum_{i \in I^-} \xi_i
+    \end{equation}
+    where setting $C^+ > C^-$ heavily penalizes misclassified positive instances (at-risk students), thereby forcing the hyperplane to favor higher recall.
+    \item \textbf{Hybrid Resampling Pipeline (SMOTE + ENN)}: Replace standard SMOTE with a hybrid SMOTE + Edited Nearest Neighbors (ENN) pipeline. ENN removes noisy majority class instances from the boundary region, reducing class overlap and yielding a cleaner separating hyperplane.
+\end{enumerate}
+
+\bibliographystyle{APA}
+\bibliography{references}
+
+\end{document}

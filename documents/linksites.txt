@@ -1,0 +1,11 @@
+EWS paper ML.pdf: https://www.researchgate.net/publication/390071459_Student_dropout_prediction_through_machine_learning_optimization_insights_from_moodle_log_data
+EWS.pdf: https://www.irjmets.com/upload_newfiles/irjmets70600152029/paper_file/irjmets70600152029.pdf
+IMIENS_PredictingStudentDropoutUsingMachineLearningAlgorithms.pdf: https://www.researchgate.net/publication/384977767_Predicting_Student_Dropout_Using_Machine_Learning_Algorithms
+Paper research EWS.pdf: https://www.researchgate.net/publication/358186766_An_early_warning_dropout_model_in_higher_education_degree_programs_A_case_study_in_Ecuador
+Secondary_school_dropout_prevention_through_2025_International_Journal.pdf: https://www.sciencedirect.com/science/article/pii/S0883035525001776#:~:text=As%20stated%20by%20Furco%20(2007,school%20and%20preventing%20school%20dropout.
+viewcontent.cgi.pdf: https://repository.rit.edu/cgi/viewcontent.cgi?article=13305&context=theses
+896-1-5564-1-10-20190417.pdf: https://datascience.codata.org/articles/896/files/submission/proof/896-1-5564-1-10-20190417.pdf
+Development_of_an_Early_Warning_System_to_Support_Educational_Planning_Process_by_Identifying_At-Risk_Students.pdf: https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10375365
+School_dropout_in_Cambodia_A_casestudy.pdf: https://www.researchgate.net/publication/369233077_School_Dropout_in_Cambodia_A_Case_Study_of_Phnom_Penh_and_Kompong_Speu
+A_hybrid_framework_of_statistical_machine_learning.pdf: https://www.researchgate.net/publication/395399975_A_hybrid_framework_of_statistical_machine_learning_and_explainable_AI_methods_for_school_dropout_prediction
+Advancing_school_dropout_early_warning_systems_the.pdf: https://www.researchgate.net/publication/372769258_Advancing_school_dropout_early_warning_systems_the_IAFREE_relational_model_for_identifying_at-risk_students

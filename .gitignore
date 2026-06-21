@@ -1,0 +1,47 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V1
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Python Virtual Environments & Cache
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Node / Frontend Build & Modules
+node_modules/
+dist/
+build/
+.tanstack/
+.lovable/
+.prettiercache
+.eslintcache
+
+# IDE Settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# App / Agent Metadata
+.antigravitycli/
+
+# Project Data & Environment Secrets
+/data
+.env
