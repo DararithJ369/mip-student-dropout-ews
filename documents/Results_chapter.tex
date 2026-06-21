@@ -169,43 +169,45 @@ The training set ($N_{\text{train}} = 256$) contained a class distribution of ap
 \section{Cross-Validation Model Comparison}
 \label{sec:model_comparison_results}
 
-Eight classification algorithms were evaluated in combination with the six resampling strategies above, using 5-fold stratified cross-validation on the training set ($N_{\text{train}} = 256$). The primary evaluation metric was the minority-class F1-Score, selected because it balances precision and recall for the at-risk class. Figure~\ref{fig:cv_model_comparison} summarises the mean F1-Scores averaged across all resampling strategies for each classifier.
+Eight classification algorithms were evaluated in combination with the six resampling strategies above, using 5-fold stratified cross-validation on the training set ($N_{\text{train}} = 256$). The primary evaluation metric was the minority-class F1-Score, selected because it balances precision and recall for the at-risk class.
+
+\paragraph{Average performance by classifier.} Figure~\ref{fig:cv_model_comparison} summarises the mean F1-Scores of each classifier \textit{averaged across all six resampling strategies}. This view reveals the \textit{overall robustness} of each algorithm regardless of how the class imbalance is handled.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.90\textwidth]{Images/cv_model_comparison.png}
-    \caption{Cross-validation F1-Score comparison across eight classifiers (averaged across all six resampling strategies). Error bars indicate standard deviation across resampling configurations. XGBoost achieves the highest mean F1-Score ($\approx 0.37$), followed by LightGBM ($\approx 0.355$). SVM achieves a moderate mean F1 ($\approx 0.325$) with lower variance.}
+    \caption{Cross-validation F1-Score for each classifier averaged across all six resampling strategies ($N_{\text{train}} = 256$, 5-fold stratified CV). Error bars show standard deviation across resampling configurations. XGBoost ($\approx 0.37$) and LightGBM ($\approx 0.355$) lead on average; SVM ($\approx 0.325$) shows the lowest variance, indicating consistent but moderate performance across all resampling variants.}
     \label{fig:cv_model_comparison}
 \end{figure}
 
-The CV comparison reveals the following ranking:
-
+Reading Fig.~\ref{fig:cv_model_comparison} by averaged F1-Score:
 \begin{enumerate}
-    \item \textbf{XGBoost} achieves the highest mean F1-Score ($\approx 0.37$) with moderate variance (error bars spanning approximately 0.29--0.40). Its gradient-boosting mechanism with L1/L2 regularisation handles the sparse feature space and class imbalance well when paired with oversampling.
-    \item \textbf{LightGBM} is a close second ($\approx 0.355$), benefiting from its leaf-wise tree growth strategy which efficiently captures the interaction between engagement and SES features.
-    \item \textbf{GradientBoosting} achieves $\approx 0.33$, followed by \textbf{SVM} and \textbf{RandomForest} (both $\approx 0.325$).
-    \item \textbf{ExtraTrees} and \textbf{LogisticRegression} both yield $\approx 0.30$--$0.31$.
-    \item \textbf{DecisionTree} performs worst ($\approx 0.295$), as its tendency to overfit individual training folds is amplified by the small minority class.
+    \item \textbf{XGBoost} ($\approx 0.37$, averaged): highest mean across all samplers, with moderate variance (error bars: $\approx 0.29$--$0.40$).
+    \item \textbf{LightGBM} ($\approx 0.355$): close second, with similarly moderate variance.
+    \item \textbf{GradientBoosting} ($\approx 0.33$), \textbf{SVM} and \textbf{RandomForest} (both $\approx 0.325$).
+    \item \textbf{ExtraTrees} and \textbf{LogisticRegression} ($\approx 0.30$--$0.31$).
+    \item \textbf{DecisionTree} ($\approx 0.295$): worst overall, due to high variance and overfitting on small training folds.
 \end{enumerate}
 
-Despite XGBoost and LightGBM achieving the highest F1-Scores, the \textbf{SVM with SMOTE} pipeline was selected as the final deployed model for two reasons. First, SVM with SMOTE showed the most \textit{stable} recall behaviour across folds, with lower standard deviation than boosting methods. Second, SVM operates as a kernel-based maximum-margin classifier that is less sensitive to the micro-distributions of synthetic SMOTE samples than tree-based ensemble methods, making it more reliable under the small-sample conditions of this study. The final SVM hyperparameters (C = 0.1, $\gamma$ = 0.01, RBF kernel, balanced class weights) were obtained through 5-fold stratified RandomizedSearchCV.
+\paragraph{Best single configuration.} When evaluating all 48 individual classifier--resampler combinations (Table~\ref{tab:cv_model_performance}), the \textbf{SMOTE-ENN + LightGBM} pipeline achieves the highest F1-Score of any single configuration: \textbf{F1 = 0.4141}, Recall = 59.05\%, Accuracy = 77.70\%, ROC-AUC = 0.7559. This is the objectively best model by cross-validation F1 metric and represents the \textit{benchmark} against which all other configurations are compared.
 
-Table~\ref{tab:cv_model_performance} reports the detailed cross-validation metrics for the most representative classifier--resampler combinations.
+Table~\ref{tab:cv_model_performance} reports the detailed cross-validation metrics for the most representative configurations.
 
 \begin{table}[htbp]
     \centering
-    \caption{5-Fold Cross-Validation Performance (Training Set, $N_{\text{train}} = 256$) -- Selected Configurations}
+    \caption{5-Fold Cross-Validation Performance (Training Set, $N_{\text{train}} = 256$). The top-performing configuration (SMOTE-ENN + LightGBM) is highlighted.}
     \label{tab:cv_model_performance}
     \resizebox{\textwidth}{!}{%
     \begin{tabular}{llccccc}
         \toprule
         \textbf{Resampling} & \textbf{Classifier} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{ROC-AUC} \\
         \midrule
+        \rowcolor{yellow!25}
+        \textbf{SMOTE-ENN} & \textbf{LightGBM (best CV)} & \textbf{0.7770} & \textbf{0.3366} & \textbf{0.5905} & \textbf{0.4141} & \textbf{0.7559} \\
         \textbf{SMOTE-ENN} & XGBoost            & 0.7731 & 0.3363 & 0.5905 & 0.4124 & 0.7533 \\
-        \textbf{SMOTE-ENN} & LightGBM           & 0.7770 & 0.3366 & 0.5905 & 0.4141 & 0.7559 \\
-        \textbf{SMOTE-ENN} & GradientBoosting   & 0.7888 & 0.3234 & 0.4714 & 0.3779 & 0.7347 \\
         \textbf{SMOTE}     & XGBoost            & 0.8633 & 0.4857 & 0.3524 & 0.4035 & 0.7204 \\
-        \textbf{SMOTE}     & SVM (selected)     & 0.7419 & 0.2572 & 0.4429 & 0.3142 & 0.6413 \\
+        \textbf{SMOTE-ENN} & GradientBoosting   & 0.7888 & 0.3234 & 0.4714 & 0.3779 & 0.7347 \\
+        \textbf{SMOTE}     & SVM (deployed)     & 0.7419 & 0.2572 & 0.4429 & 0.3142 & 0.6413 \\
         \textbf{Original}  & SVM                & 0.7732 & 0.3004 & 0.4762 & 0.3538 & 0.6784 \\
         \textbf{Original}  & GradientBoosting   & 0.8790 & 0.7000 & 0.2048 & 0.3076 & 0.6961 \\
         \bottomrule
@@ -213,7 +215,21 @@ Table~\ref{tab:cv_model_performance} reports the detailed cross-validation metri
     }
 \end{table}
 
-Table~\ref{tab:cv_model_performance} highlights a critical trade-off. On the original imbalanced dataset, GradientBoosting achieves 87.9\% accuracy but only 20.48\% recall --- it misses nearly 80\% of at-risk students by always predicting the majority class. SMOTE-ENN paired with LightGBM or XGBoost achieves the best F1 (0.41) by boosting recall to 59\%, but this comes at the cost of lower precision ($\approx 33\%$). The selected SMOTE + SVM achieves a balanced operating point (recall = 44.29\%, ROC-AUC = 0.64) that is further improved through threshold tuning in the next section.
+\paragraph{Why SMOTE + SVM was deployed despite lower CV F1.}
+The SMOTE-ENN + LightGBM configuration achieves the best cross-validation F1 (0.4141), which makes it the top-ranked model by standard benchmark criteria. However, the cross-validation F1 is computed at the \textit{default threshold} $\tau = 0.50$. For an EWS, the deployment decision must account for two additional factors:
+
+\begin{enumerate}
+    \item \textbf{Recall is the priority metric, not F1.} At $\tau = 0.50$, SMOTE-ENN + LightGBM achieves only 59.05\% recall --- meaning it misses approximately 41\% of at-risk students in cross-validation. The SVM pipeline, after threshold tuning to $\tau = 0.30$ on the validation set, achieves \textbf{90.91\% recall} on the holdout test (Section~\ref{sec:holdout_evaluation_results}). No threshold-tuned evaluation was conducted for LightGBM in this study.
+
+    \item \textbf{Probability calibration and deployment stability.} The SVM with \texttt{probability=True} uses Platt scaling to produce well-calibrated probability outputs, which directly enables the continuous risk-score display in the EWS dashboard and the tiered intervention protocol (Section~\ref{subsec:operational_workload}). LightGBM probability outputs are less calibrated by default and would require an additional calibration step (e.g., isotonic regression) before threshold tuning could be applied reliably on a dataset of this size ($N = 400$).
+\end{enumerate}
+
+The deployed pipeline is therefore:
+\begin{center}
+    \texttt{StandardScaler} $\rightarrow$ \texttt{SMOTE(random\_state=42)} $\rightarrow$ \texttt{SVC(C=0.1, $\gamma$=0.01, kernel=`rbf', class\_weight=`balanced', probability=True)}
+\end{center}
+
+This pipeline was selected \textit{not} because SVM is the best model by CV F1, but because SVM + threshold tuning yields the highest recall on unseen data while providing calibrated probability scores needed for the dashboard. The SMOTE-ENN + LightGBM configuration is retained as the benchmark reference and a recommended direction for future work when a larger dataset is available for robust calibration.
 
 %%============================================================================
 \section{Decision Threshold Tuning}
