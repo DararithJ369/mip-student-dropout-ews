@@ -259,26 +259,28 @@ where $\chi^2$ is the Pearson chi-square test statistic, $n$ is the total sample
     \centering
     \caption{Ranked Cram\'{e}r's V Associations with Dropout Intention (\texttt{thought\_dropout})}
     \label{tab:cramers_v_coefficients}
-    \begin{tabular}{clr}
+    \begin{tabular}{clcc}
         \toprule
-        \textbf{Rank} & \textbf{Survey Feature} & \textbf{Cram\'{e}r's V} \\
+        \textbf{Rank} & \textbf{Survey Feature} & \textbf{Unadjusted Cram\'{e}r's V} & \textbf{Bias-Corrected Cram\'{e}r's V} \\
         \midrule
-        1  & Weekly attendance days (\texttt{attendance})        & 0.2656 \\
-        2  & Absence frequency (\texttt{absence})                & 0.2469 \\
-        3  & Subjective family income (\texttt{family\_income})  & 0.2178 \\
-        4  & Monthly score average (\texttt{monthly\_average})   & 0.1427 \\
-        5  & Living arrangements (\texttt{living\_with})         & 0.1047 \\
-        6  & Primary transport mode (\texttt{transport})         & 0.0994 \\
-        7  & Distance to school (\texttt{distance})              & 0.0575 \\
-        8  & Student gender (\texttt{gender})                    & 0.0317 \\
-        9  & Parental education (\texttt{parental\_education})   & 0.0000 \\
-        10 & Works to support family (\texttt{work\_support})    & 0.0000 \\
-        11 & External NGO/scholarship aid (\texttt{external\_support}) & 0.0000 \\
+        1  & Weekly attendance days (\texttt{attendance})        & 0.2745 & 0.2656 \\
+        2  & Absence frequency (\texttt{absence})                & 0.2614 & 0.2469 \\
+        3  & Subjective family income (\texttt{family\_income})  & 0.2232 & 0.2178 \\
+        4  & Monthly score average (\texttt{monthly\_average})   & 0.1591 & 0.1427 \\
+        5  & Living arrangements (\texttt{living\_with})         & 0.1358 & 0.1047 \\
+        6  & Primary transport mode (\texttt{transport})         & 0.1318 & 0.0994 \\
+        7  & Distance to school (\texttt{distance})              & 0.0912 & 0.0575 \\
+        8  & Student gender (\texttt{gender})                    & 0.0776 & 0.0317 \\
+        9  & Parental education (\texttt{parental\_education})   & 0.0596 & 0.0000 \\
+        10 & External NGO/scholarship aid (\texttt{external\_support}) & 0.0318 & 0.0000 \\
+        11 & Works to support family (\texttt{work\_support})    & 0.0005 & 0.0000 \\
         \bottomrule
     \end{tabular}
+\\ \medskip
+\raggedright \footnotesize \textbf{Note on Zero Associations}: Several contextual features (parental education, external support, and student work support) yield a bias-corrected Cram\'{e}r's V of exactly $0.0000$. This occurs due to the Bergsma bias-correction penalty term $\frac{(k-1)(r-1)}{n-1}$ exceeding the raw phi-squared value ($\chi^2/n$) for weakly associated features. Showing both unadjusted and bias-corrected coefficients demonstrates that while these variables have weak raw associations (e.g., $0.0596$ for parental education), their standalone predictive power is statistically negligible. This justifies the necessity of aggregating them into composite engineered features.
 \end{table}
 
-The association analysis reveals that school disengagement metrics (attendance quality and absence frequency) and household socioeconomic status (family income) are the three strongest individual statistical predictors of dropout intention. Notably, features such as parental education, working to support family, and access to external aid all receive bias-corrected Cram\'{e}r's V values of 0.0000, indicating that while these variables are contextually important (and indeed validated by the literature), they carry no individual discriminative power in isolation and must be combined into composite engineered features to be effective in a predictive model.
+The association analysis reveals that school disengagement metrics (attendance quality and absence frequency) and household socioeconomic status (family income) are the three strongest individual statistical predictors of dropout intention. As noted in Table~\ref{tab:cramers_v_coefficients}, several individual variables yield a bias-corrected Cram\'{e}r's V of exactly $0.0000$ due to the Bergsma penalty term capping weak associations at zero. For student labor support (\texttt{work\_support}), the unadjusted association is virtually zero ($0.0005$), as both working and non-working students exhibit almost identical dropout thought rates in the raw survey data (13.6\% vs. 13.0\%, respectively). Consequently, while these individual factors are contextually important, they carry negligible standalone predictive power and must be combined into composite engineered features to expose their combined predictive signals.
 
 %%============================================================================
 \section{Feature Engineering}
@@ -325,12 +327,12 @@ Table~\ref{tab:feature_engineering_table} presents the full set of engineered fe
     \hline
 
     \textbf{SES Score ($SES$)} &
-    $SES = x_{\text{family\_income}} + x_{\text{parental\_education}} + x_{\text{external\_support}}$ &
+    \parbox{4.8cm}{\vspace{0.1cm}\raggedright $SES = x_{\text{family\_income}} +$\\ $x_{\text{parental\_education}} +$\\ $x_{\text{external\_support}}$\vspace{0.1cm}} &
     Aggregates household financial capacity, parental intellectual capital, and access to external aid into a single composite index of socioeconomic status. Individually these features have near-zero Cram\'{e}r's V, but combined they differentiate economic vulnerability. \\
     \hline
 
     \textbf{Support Index ($SI$)} &
-    $SI = x_{\text{living\_with}} + x_{\text{external\_support}} + x_{\text{parental\_education}}$ &
+    \parbox{4.8cm}{\vspace{0.1cm}\raggedright $SI = x_{\text{living\_with}} +$\\ $x_{\text{external\_support}} +$\\ $x_{\text{parental\_education}}$\vspace{0.1cm}} &
     Measures the strength of the student's \textit{protective environment} from family structure and institutional support networks. Captures both direct household supervision and indirect support channels. \\
     \hline
 
@@ -340,7 +342,7 @@ Table~\ref{tab:feature_engineering_table} presents the full set of engineered fe
     \hline
 
     \textbf{Weighted Risk Score ($WRS$)} &
-    $WRS = 0.3 \cdot x_{\text{absence}} + 0.1 \cdot x_{\text{work\_support}} + 0.2 \cdot x_{\text{distance}} + 0.4 \cdot y_{\text{thought\_dropout}}$ &
+    \parbox{4.8cm}{\vspace{0.1cm}\raggedright $WRS = 0.3 \cdot x_{\text{absence}} +$\\ $0.1 \cdot x_{\text{work\_support}} +$\\ $0.2 \cdot x_{\text{distance}} +$\\ $0.4 \cdot y_{\text{thought\_dropout}}$\vspace{0.1cm}} &
     A composite risk index that weights three contextual indicators and the target variable itself ($y_{\text{thought\_dropout}}$). Because this feature explicitly incorporates the target variable, it is target-informed and would introduce severe target leakage if used in classification models. Therefore, it is excluded from prediction features and reserved solely for the unsupervised clustering stage to generate target-informed student profiles. \\
     \hline
 

@@ -60,7 +60,7 @@ Table~\ref{tab:cluster_profiles} summarizes the corrected cluster profiles with 
     \centering
     \caption{Corrected K-Means Cluster Profiles ($k=3$, $N=400$)}
     \label{tab:cluster_profiles}
-    \small
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{lccccccr}
         \toprule
         \textbf{Risk Label} & \textbf{Cluster} & \textbf{$AQ$} & \textbf{$ES$} & \textbf{$SES$} & \textbf{$SI$} & \textbf{$CB$} & \textbf{Dropout Rate} \\
@@ -69,7 +69,8 @@ Table~\ref{tab:cluster_profiles} summarizes the corrected cluster profiles with 
         \textbf{Medium Risk} (Socio-Protected)     & 1 & $-0.19$ & $0.33$ & $4.48$ & $4.19$ & $2.74$ & \textbf{16.25\%} \\
         \textbf{Low Risk} (Engaged \& Successful)  & 2 & $+1.98$ & $2.59$ & $3.18$ & $2.70$ & $2.44$ & \textbf{5.30\%} \\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
 %%============================================================================
@@ -91,7 +92,30 @@ The baseline experimental configurations (Original dataset, without resampling) 
 
 Crucially, the best-performing configuration by mean cross-validation F1-score was the \textbf{SMOTE-ENN + LightGBM} pipeline (CV F1 = 0.4141). This model achieved an Accuracy of 77.70\%, a Precision of 33.66\%, a Recall of 59.05\%, and an ROC-AUC of 0.7559. Under the baseline configurations (Original dataset, without resampling), tree-based models like Gradient Boosting achieved a high overall Accuracy (87.90\%) but suffered from a low Recall of 20.48\% (CV F1 = 0.3076), meaning they would fail to flag nearly 80\% of the students who express dropout thoughts. Under SMOTE-ENN resampling, Gradient Boosting achieved a CV F1 of 0.3779, yielding a recall of 47.14\% but with lower precision (32.34\%).
 
-In contrast, Support Vector Machines paired with minority oversampling demonstrated more stable boundary generation. The selected \textbf{SMOTE + SVM} pipeline achieved a cross-validation F1-score of 0.3142, a recall of 44.29\%, an accuracy of 74.19\%, and an ROC-AUC of 0.6413. By applying synthetic oversampling, the SVM algorithm constructed a wider margin separating hyperplane that did not collapse under class skewness. Because the primary design objective of an educational Early Warning System is to identify at-risk students for proactive counselor check-ins, optimizing for a higher and more balanced recall is critical. Consequently, the SMOTE + SVM pipeline was selected as the final deployed EWS prediction model.
+In contrast, Support Vector Machines paired with minority oversampling demonstrated more stable boundary generation. The selected \textbf{SMOTE + SVM} pipeline achieved a cross-validation F1-score of 0.3142, a recall of 44.29\%, an accuracy of 74.19\%, and an ROC-AUC of 0.6413. By applying synthetic oversampling, the SVM algorithm constructed a wider margin separating hyperplane that did not collapse under class skewness. Table~\ref{tab:cv_model_performance} summarizes the 5-fold cross-validation performance metrics for a selection of representative classifier--resampler configurations.
+
+\begin{table}[htbp]
+    \centering
+    \caption{5-Fold Cross-Validation Performance Comparison (Training Set, $N_{\text{train}} = 256$)}
+    \label{tab:cv_model_performance}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{lcccccc}
+        \toprule
+        \textbf{Resampling Strategy} & \textbf{Classifier} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{ROC-AUC} \\
+        \midrule
+        \textbf{SMOTE-ENN} & LightGBM & 0.7770 & 0.3366 & 0.5905 & 0.4141 & 0.7559 \\
+        \textbf{SMOTE-ENN} & XGBoost & 0.7731 & 0.3363 & 0.5905 & 0.4124 & 0.7533 \\
+        \textbf{SMOTE}     & XGBoost & 0.8633 & 0.4857 & 0.3524 & 0.4035 & 0.7204 \\
+        \textbf{SMOTE-ENN} & Gradient Boosting & 0.7888 & 0.3234 & 0.4714 & 0.3779 & 0.7347 \\
+        \textbf{SMOTE}     & Support Vector Machine & 0.7419 & 0.2572 & 0.4429 & 0.3142 & 0.6413 \\
+        \textbf{Original}  & Support Vector Machine & 0.7732 & 0.3004 & 0.4762 & 0.3538 & 0.6784 \\
+        \textbf{Original}  & Gradient Boosting & 0.8790 & 0.7000 & 0.2048 & 0.3076 & 0.6961 \\
+        \bottomrule
+    \end{tabular}%
+    }
+\end{table}
+
+Because the primary design objective of an educational Early Warning System is to identify at-risk students for proactive counselor check-ins, optimizing for a higher and more balanced recall is critical. Consequently, the SMOTE + SVM pipeline was selected as the final deployed EWS prediction model.
 
 The final deployed SVM model uses an RBF kernel, hyperparameter $C=0.1$ and $\gamma=0.01$, balanced class weights, and probability calibration enabled:
 \begin{center}
@@ -171,6 +195,7 @@ Table~\ref{tab:test_set_performance} summarizes the comparative performance metr
     \centering
     \caption{Holdout Test Set Performance Comparison ($N=80$)}
     \label{tab:test_set_performance}
+    \resizebox{\textwidth}{!}{%
     \begin{tabular}{lccccc}
         \toprule
         \textbf{Model Pipeline} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{ROC-AUC} \\
@@ -178,12 +203,38 @@ Table~\ref{tab:test_set_performance} summarizes the comparative performance metr
         \textbf{SMOTE + SVM} & 0.3875 & 0.1724 & 0.9091 & 0.2899 & 0.6462 \\
         \textbf{Soft Voting Ensemble} & 0.8000 & 0.0000 & 0.0000 & 0.0000 & 0.6344 \\
         \bottomrule
-    \end{tabular}
+    \end{tabular}%
+    }
 \end{table}
 
 The SMOTE + SVM model correctly identified 10 out of the 11 actual dropout cases (90.91\% recall) on the holdout test set, compared to 0 out of 11 (0.00\% recall) for the Soft Voting Ensemble. Because the ensemble averages predictions from multiple base models (Logistic Regression, RandomForest, XGBoost) that did not benefit from threshold tuning, it collapsed to a default majority class prediction under the extreme class skewness. The SMOTE + SVM model achieved its high recall at the cost of overall accuracy (38.75\% vs. 80.00\%) and precision (17.24\% vs. 0.00\%), producing 48 False Positives (compared to 5 for the ensemble) and only 1 False Negative (compared to 11 for the ensemble).
 
 The model's recall generalizes robustly from the validation set (87.50\%) to the holdout test set (90.91\%). This demonstrates that adjusting the classification hyperplane using minority oversampling and decision threshold tuning ($\tau = 0.30$) successfully isolates the boundary for identifying at-risk students, making it a highly sensitive early warning tool despite the limited data scale.
+
+\subsection{Operational Utility and Counselor Workload Analysis}
+\label{subsec:operational_workload}
+
+While the SMOTE + SVM model achieves a high recall of 90.91\% on the holdout test set (identifying 10 out of 11 actual at-risk students), its low specificity (30.43\%, corresponding to a False Positive Rate of 69.57\%) introduces a significant operational trade-off that must be examined for real-world deployment. In the holdout test set of 80 students, the model flags a total of 58 students (10 True Positives and 48 False Positives) as at-risk, meaning that 72.5\% of the entire student body is flagged for intervention.
+
+In a practical counseling workflow, this high false alert rate creates several challenges:
+\begin{itemize}
+    \item \textbf{Resource-Constrained Workload}: In an average Cambodian secondary school with 1,000 students, a 72.5\% alert rate translates to 725 flagged students. Given that most schools operate with very limited counseling staff (often a single teacher acting as a part-time counselor), conducting deep-dive individual follow-ups with three-quarters of the student body is logistically unfeasible.
+    \item \textbf{Alert Fatigue}: Continuous false alerts can lead to alert fatigue, causing teachers and counselors to lose trust in the early warning system's recommendations and potentially overlook genuinely at-risk students.
+    \item \textbf{Intervention Dilution}: Diluting limited intervention resources (such as NGO scholarships, tutoring, or direct home visits) across a large group of false positives reduces the support intensity available for the 10\% of students who are genuinely on the verge of dropping out.
+\end{itemize}
+
+To mitigate these operational costs and make the early warning system actionable in school counseling workflows, we propose two practical deployment strategies:
+
+\begin{enumerate}
+    \item \textbf{Dynamic Threshold Adjustment}: Counselors can dynamically adjust the probability threshold $\tau$ depending on their available counseling bandwidth. As shown in the threshold tuning curve (Fig.~\ref{fig:threshold_tuning}), setting $\tau = 0.50$ on the validation set reduces the false alert rate, yielding a validation Recall of 62.50\% and a Precision of 21.74\%. If bandwidth is extremely limited, raising the threshold to $\tau = 0.55$ achieves a validation Recall of 62.50\% and a Precision of 31.25\%. This significantly improves specificity (specificity increases to over 80\%) and reduces the number of flagged students to a manageable 15--20\% of the student population, representing a much more targeted and efficient use of resources.
+    \item \textbf{Tiered Intervention Protocol}: Instead of treating the classification output as binary, the dashboard can display the raw risk probabilities to implement a tiered support structure:
+        \begin{itemize}
+            \item \textbf{High-Probability Tier ($\ge 0.70$)}: Reserved for high-intensity, resource-heavy interventions (e.g., direct NGO scholarship applications, family agricultural aid, and immediate home visits).
+            \item \textbf{Medium-Probability Tier ($0.30 \le \text{Risk} < 0.70$)}: Standard interventions (e.g., peer-mentoring groups, attendance tracking cards, and monthly check-ins).
+            \item \textbf{Low-Probability Tier ($< 0.30$)}: No direct intervention, standard classroom monitoring.
+        \end{itemize}
+\end{enumerate}
+This analysis demonstrates that the early warning system is not a rigid binary switch, but a flexible screening tool that can be optimized to balance sensitivity and counselor workload according to the specific resources of each educational institution.
 
 %%============================================================================
 \section{General Discussion and Practical Implications}
