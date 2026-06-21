@@ -215,21 +215,27 @@ Table~\ref{tab:cv_model_performance} reports the detailed cross-validation metri
     }
 \end{table}
 
-\paragraph{Why SMOTE + SVM was deployed despite lower CV F1.}
-The SMOTE-ENN + LightGBM configuration achieves the best cross-validation F1 (0.4141), which makes it the top-ranked model by standard benchmark criteria. However, the cross-validation F1 is computed at the \textit{default threshold} $\tau = 0.50$. For an EWS, the deployment decision must account for two additional factors:
+\paragraph{Study limitation: threshold tuning was applied only to SVM.}
 
-\begin{enumerate}
-    \item \textbf{Recall is the priority metric, not F1.} At $\tau = 0.50$, SMOTE-ENN + LightGBM achieves only 59.05\% recall --- meaning it misses approximately 41\% of at-risk students in cross-validation. The SVM pipeline, after threshold tuning to $\tau = 0.30$ on the validation set, achieves \textbf{90.91\% recall} on the holdout test (Section~\ref{sec:holdout_evaluation_results}). No threshold-tuned evaluation was conducted for LightGBM in this study.
+In principle, the objectively best cross-validation model --- \textbf{SMOTE-ENN + LightGBM} (F1 = 0.4141, ROC-AUC = 0.7559) --- should be the deployed model. Selecting a weaker CV model for deployment requires a clear, principled justification. The critical limitation of this study is that \textit{decision threshold tuning was only performed on the SMOTE + SVM pipeline}, not on LightGBM or any other model. This means the 59.05\% recall of LightGBM (Table~\ref{tab:cv_model_performance}) is measured at the default $\tau = 0.50$, which is not the recall-optimised operating point.
 
-    \item \textbf{Probability calibration and deployment stability.} The SVM with \texttt{probability=True} uses Platt scaling to produce well-calibrated probability outputs, which directly enables the continuous risk-score display in the EWS dashboard and the tiered intervention protocol (Section~\ref{subsec:operational_workload}). LightGBM probability outputs are less calibrated by default and would require an additional calibration step (e.g., isotonic regression) before threshold tuning could be applied reliably on a dataset of this size ($N = 400$).
-\end{enumerate}
+Had threshold tuning been applied to SMOTE-ENN + LightGBM under the same conditions (sweeping $\tau$ on the validation set and selecting for maximum recall), it is expected --- given its superior ROC-AUC of 0.7559 vs.\ 0.6413 for SVM --- that LightGBM would achieve a \textit{higher} recall at an equivalent false-alert rate. Therefore, \textbf{SMOTE-ENN + LightGBM is the recommended model for future deployment} when proper threshold calibration and holdout evaluation can be conducted.
 
-The deployed pipeline is therefore:
+For the scope of this study, the deployed pipeline is the \textbf{SMOTE + SVM} model, selected because:
+\begin{itemize}
+    \item Threshold tuning and holdout evaluation were fully executed only for this pipeline (Section~\ref{sec:threshold_tuning_results} and Section~\ref{sec:holdout_evaluation_results}).
+    \item The SVM with \texttt{probability=True} uses Platt scaling, producing well-calibrated probability outputs suitable for the EWS dashboard's tiered risk display.
+    \item After hyperparameter tuning via 5-fold \texttt{RandomizedSearchCV} ($n_{\text{iter}} = 20$, search space: $C \in \{0.1, 1, 10, 100\}$, $\gamma \in \{\texttt{scale}, \texttt{auto}, 0.01, 0.1, 1\}$), the best parameters were $C = 0.1$ and $\gamma = 0.01$, reflecting a soft-margin, wide-kernel SVM that generalises conservatively on the small dataset.
+\end{itemize}
+
+The final deployed pipeline is:
 \begin{center}
     \texttt{StandardScaler} $\rightarrow$ \texttt{SMOTE(random\_state=42)} $\rightarrow$ \texttt{SVC(C=0.1, $\gamma$=0.01, kernel=`rbf', class\_weight=`balanced', probability=True)}
 \end{center}
 
-This pipeline was selected \textit{not} because SVM is the best model by CV F1, but because SVM + threshold tuning yields the highest recall on unseen data while providing calibrated probability scores needed for the dashboard. The SMOTE-ENN + LightGBM configuration is retained as the benchmark reference and a recommended direction for future work when a larger dataset is available for robust calibration.
+\begin{quote}
+\textit{Limitation: The fair comparison between threshold-tuned SMOTE-ENN + LightGBM and threshold-tuned SMOTE + SVM on the holdout set was not conducted in this study. Future work should apply threshold tuning to all candidate models and select the deployed model based on recall-at-threshold, not default-threshold F1.}
+\end{quote}
 
 %%============================================================================
 \section{Decision Threshold Tuning}
