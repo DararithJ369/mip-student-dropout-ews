@@ -1,0 +1,63 @@
+% !TEX root = ../BookTemplate.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+\chapter{Conclusion and Future Work}
+\label{ch:conclusion_future_work}
+
+%%============================================================================
+\section{Summary of Findings}
+\label{sec:summary_findings}
+
+When we started this project, the question seemed straightforward: can a machine learning model predict which secondary school students in Cambodia are at risk of dropping out? By the end, the answer turned out to be \textit{yes} --- but the path to getting there taught us more than the final result did.
+
+The first and perhaps most important lesson came not from the models but from the data itself. We had assumed that poverty would be the dominant driver of dropout risk, given the well-documented economic hardship faced by rural Cambodian families. The Cram\'{e}r's V analysis challenged that assumption immediately. The strongest individual predictors of dropout intention were not household income or parental education, but \textit{behavioural} signals --- how often a student attended school, and how engaged they were academically. Socioeconomic hardship matters, but it operates as a background pressure rather than a direct cause. Students from poor households who still showed up to school and stayed engaged had low risk scores. The students who were actually at risk were those who had already started withdrawing: fewer days attended, lower academic participation, longer and harder commutes. By the time a student is already disengaged, the financial stress has long since done its quiet damage.
+
+The clustering analysis made this vivid. K-Means produced three clearly separated student segments. The cluster with the highest Weighted Risk Score (WRS = 1.30) was also the one with the lowest attendance quality (2.16/5) and the lowest engagement score (2.76/5) --- by a significant margin. This was the group the EWS needs to identify and reach \textit{before} the disengagement becomes permanent. Interestingly, the cluster that was economically the most disadvantaged (lowest SES score) was \textit{not} the highest-risk group. These students were still showing up and participating. That tells a counsellor something concrete: a student who is poor but engaged is in a very different situation from one who is quiet, absent, and already halfway out the door.
+
+On the modelling side, we learned a harder lesson about the gap between cross-validation performance and real-world utility. The best model by cross-validation F1-Score was SMOTE-ENN + LightGBM (F1 = 0.4141, ROC-AUC = 0.7559). But when that model was evaluated on the holdout test set, it failed completely --- achieving 0\% recall on the at-risk class. The boosting algorithm, trained on the heavily resampled SMOTE-ENN distribution, had learned a probability landscape that bore little resemblance to the actual one. In practice, it predicted low risk for almost everyone, including students who genuinely intended to leave school.
+
+The model that \textit{did} work was the SMOTE + SVM pipeline. After tuning the decision threshold to $\tau = 0.30$ on the validation set, it identified \textbf{10 out of 11} actual at-risk students in the holdout set (90.91\% recall). Its cross-validation F1 (0.3142) was one of the lowest in the comparison. This outcome is a concrete reminder that, for imbalanced classification tasks in high-stakes settings, the evaluation metric used to select a model must match the operational objective of deploying it. F1-Score at a default threshold of 0.50 is not that metric. Recall at the deployment threshold is.
+
+The SHAP analysis provided the interpretability layer that makes the system usable by a non-technical school counsellor. The model is not a black box: when it flags a student, it can show exactly which combination of low engagement score, poor attendance, and high commute burden drove the prediction. This transparency is not just ethically desirable --- it is functionally necessary. A counsellor cannot intervene meaningfully with only a risk score; they need to know \textit{why} the score is high to design the right response.
+
+\section{Limitations}
+\label{sec:limitations}
+
+We want to be honest about what this project is and what it is not. The prototype works well within its constraints, but those constraints are significant.
+
+The most fundamental limitation is the nature of the outcome variable. We are predicting \textit{dropout intention} --- a thought --- rather than an actual dropout event. Students were asked whether they had ever thought about leaving school. Some may have answered conservatively because of social stigma. Others may have thought about it fleetingly without any real risk of following through. The 13.25\% positive rate in our dataset almost certainly understates the true prevalence of serious dropout risk. A model trained on self-reported intention is useful as a first step, but it is not the same as a model trained on verified enrollment outcomes.
+
+The cross-sectional survey design is the second major constraint. We captured a single snapshot of each student's life. But dropout is not a moment --- it is a process. A student who is disengaged today may recover with the right support; a student who seems fine today may be one family crisis away from leaving. Longitudinal data --- monthly attendance records, term-by-term grade trajectories, recorded counsellor interactions --- would capture that process and give the model far more to work with.
+
+The dataset size ($N = 400$) constrained everything. The minority class contained only 53 students across the full dataset, of which only 11 reached the holdout test set. That is a very thin basis on which to draw confident conclusions about model generalization. The fact that SMOTE-ENN + LightGBM collapsed entirely on 11 test-set positives reflects how fragile models become when the minority class is this small.
+
+Finally, a model that flags students for counselling intervention carries real fairness obligations. We did not conduct a formal algorithmic fairness audit. We do not know whether the model's false positive rate is higher for certain subgroups --- students from specific provinces, transport modes, or family structures. Before any live deployment, that audit is not optional.
+
+%%============================================================================
+\section{Future Work}
+\label{sec:future_work}
+
+The prototype built in this project is, deliberately, a starting point. The clearest directions forward are the following.
+
+\textbf{Longitudinal data collection.} Replacing or supplementing the cross-sectional survey with termly tracking data --- school registers, grade sheets, and attendance logs --- would transform the EWS from a one-time risk screener into a living monitoring system. A student whose attendance quality drops steadily over three terms is a very different case from one who had a bad month. Temporal features capture that distinction; a cross-sectional survey cannot.
+
+\textbf{Expanding to verified dropout outcomes.} Partnering with provincial education offices to obtain records of students who actually left school --- not just those who reported thinking about it --- would let future models be trained and validated on ground truth. This is logistically difficult in Cambodia's decentralised school system, but it would fundamentally improve both model quality and societal credibility.
+
+\textbf{Proper threshold-aware model selection.} This study revealed that selecting models by CV F1 at default threshold is insufficient for EWS tasks. Future work should implement a systematic recall-at-threshold evaluation protocol: for each candidate model, sweep the threshold on a held-out validation set, select the operating point that meets a minimum recall target (e.g., $\geq 80\%$), and then compare models on precision and F1 at their respective optimal thresholds. This ensures the model selection criterion is aligned with deployment objectives from the start.
+
+\textbf{Probability calibration for ensemble models.} The collapse of LightGBM on the holdout test set was caused by miscalibrated probability outputs after SMOTE-ENN resampling. Applying post-hoc calibration techniques --- Platt scaling or isotonic regression --- to the LightGBM output before threshold tuning could recover much of its discriminative advantage (ROC-AUC = 0.7559) while making its probability scores operationally meaningful. A properly calibrated LightGBM model may outperform the SVM on a larger dataset where calibration can be estimated reliably.
+
+\textbf{Fairness and bias auditing.} Before deployment in any school, a structured fairness audit should be conducted: measuring false positive rates and false negative rates disaggregated by province, gender, transport mode, and family structure. If the model systematically over-flags one group or misses another, those biases must be addressed before the system influences real counselling decisions.
+
+\textbf{Teacher and counsellor co-design.} The EWS dashboard was designed with usability in mind, but it has not been tested with actual school counsellors. A participatory design process --- involving the people who would use it daily --- would surface practical barriers (language, literacy, device access, time) that no amount of technical optimization can anticipate. The most accurate model in the world is useless if counsellors do not trust it or do not have time to act on it.
+
+%%============================================================================
+\section{Closing Remark}
+\label{sec:closing_remark}
+
+Cambodia loses thousands of secondary school students every year to a slow, quiet accumulation of pressures --- long commutes, financial stress, absent parents, the feeling that school is simply not worth the effort. None of these pressures are inevitable. Most of them have known policy responses: transport subsidies, conditional cash transfers, community mentoring, flexible school schedules.
+
+What has been missing is a way to see the risk early enough to act. This project is a small, imperfect attempt to build that visibility from survey data and open-source machine learning tools. The technical contributions --- the feature engineering framework, the threshold-tuned SVM pipeline, the SHAP-powered dashboard --- are specific to this dataset and context. But the broader lesson is transferable: in resource-limited settings where dropout risk data is sparse and noisy, recall-optimised models with interpretable explanations are more useful than high-accuracy black boxes.
+
+The students in this dataset are real. The 13.25\% who reported thinking about leaving school are not a statistic to be optimised away --- they are individuals navigating genuinely difficult circumstances. Any tool that helps a school counsellor reach even one of them a term earlier than they otherwise would have is worth building.
+
