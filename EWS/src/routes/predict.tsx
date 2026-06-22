@@ -4,6 +4,8 @@ import { Brain, Sparkles, RotateCcw, AlertTriangle, ShieldCheck, AlertCircle, Lo
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useI18n } from "@/lib/i18n";
+import { getApiUrl } from "@/lib/api";
+
 
 export const Route = createFileRoute("/predict")({ component: PredictPage });
 
@@ -191,7 +193,7 @@ function PredictPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict", {
+      const response = await fetch(getApiUrl("/predict"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -222,8 +224,8 @@ function PredictPage() {
       console.error(e);
       setError(
         lang === "en"
-          ? "Failed to connect to the AI Predictor service. Please ensure the backend server is running on port 8000."
-          : "មិនអាចភ្ជាប់ទៅសេវាកម្មទស្សន៍ទាយ AI បានទេ។ សូមប្រាកដថាម៉ាស៊ីនមេ backend កំពុងដំណើរការលើរន្ធ 8000។"
+          ? "Failed to connect to the AI Predictor service. Please ensure the backend server is running and accessible."
+          : "មិនអាចភ្ជាប់ទៅសេវាកម្មទស្សន៍ទាយ AI បានទេ។ សូមប្រាកដថាម៉ាស៊ីនមេ backend កំពុងដំណើរការ និងអាចចូលប្រើបាន។"
       );
       setResult(null);
     } finally {
