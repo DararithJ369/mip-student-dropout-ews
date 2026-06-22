@@ -43,7 +43,7 @@ def predict_dropout(data):
     # 7. risk level
     if probability >= 0.7:
         risk_level = "High Risk"
-    elif probability >= 0.4:
+    elif probability >= 0.30:
         risk_level = "Medium Risk"
     else:
         risk_level = "Low Risk"
