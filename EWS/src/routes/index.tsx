@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   Users, AlertTriangle, AlertCircle, ShieldCheck, CalendarCheck, GraduationCap,
-  ArrowUpRight, TrendingUp,
+  ArrowUpRight, TrendingUp, Loader2, AlertCircle as ErrorIcon
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
@@ -11,7 +11,8 @@ import {
 import { AppLayout } from "@/components/AppLayout";
 import { KpiCard } from "@/components/KpiCard";
 import { useI18n } from "@/lib/i18n";
-import { kpis, trendData, distribution, attendanceByGrade, alerts, students } from "@/lib/mock";
+import { useState, useEffect } from "react";
+import { getAnalyticsData, getInterventionsData, getStudents } from "@/lib/api";
 
 export const Route = createFileRoute("/")({ component: Dashboard });
 
@@ -23,7 +24,64 @@ const riskColors: Record<string, string> = {
 
 function Dashboard() {
   const { t } = useI18n();
-  const atRisk = [...students].sort((a, b) => (a.risk === "high" ? -1 : 1)).slice(0, 5);
+  const navigate = useNavigate();
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [atRisk, setAtRisk] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [analRes, intervRes, studRes] = await Promise.all([
+        getAnalyticsData(),
+        getInterventionsData(),
+        getStudents()
+      ]);
+      setAnalytics(analRes);
+      setAlerts(intervRes.alerts);
+      
+      // Sort and slice top 5 high-risk students
+      const sortedAtRisk = [...studRes]
+        .sort((a, b) => (a.risk === "high" ? -1 : 1))
+        .slice(0, 5);
+      setAtRisk(sortedAtRisk);
+      setError(null);
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load dashboard data. Ensure the backend server is running.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex h-80 flex-col items-center justify-center text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">Initializing EduGuard Dashboard...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error || !analytics) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-danger/20 bg-danger/10 text-danger">
+          <ErrorIcon className="h-10 w-10 mb-2" />
+          <p className="font-semibold">{error}</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const { kpis, trendData, distribution, attendanceByGrade } = analytics;
 
   return (
     <AppLayout>
@@ -59,7 +117,7 @@ function Dashboard() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="font-display text-lg font-semibold">{t.dashboard.trends}</h3>
-              <p className="text-xs text-muted-foreground">7-month risk evolution across the school</p>
+              <p className="text-xs text-muted-foreground">Risk evolution from database</p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
               <TrendingUp className="h-3 w-3" /> Improving
@@ -103,7 +161,7 @@ function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={distribution} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={3} strokeWidth={0}>
-                  {distribution.map((d) => (
+                  {distribution.map((d: any) => (
                     <Cell key={d.name} fill={riskColors[d.name]} />
                   ))}
                 </Pie>
@@ -119,7 +177,7 @@ function Dashboard() {
             </ResponsiveContainer>
           </div>
           <div className="mt-2 space-y-2">
-            {distribution.map((d) => (
+            {distribution.map((d: any) => (
               <div key={d.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: riskColors[d.name] }} />
@@ -141,7 +199,7 @@ function Dashboard() {
               <BarChart data={attendanceByGrade}>
                 <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="grade" stroke="var(--color-muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis domain={[70, 100]} stroke="var(--color-muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 100]} stroke="var(--color-muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip
                   contentStyle={{
                     background: "var(--color-card)",
@@ -162,20 +220,36 @@ function Dashboard() {
             <Link to="/alerts" className="text-xs font-semibold text-primary hover:underline">{t.dashboard.viewAll}</Link>
           </div>
           <div className="space-y-3">
-            {alerts.slice(0, 4).map((a) => (
-              <div key={a.id} className="flex items-start gap-3 rounded-xl border border-border bg-background/40 p-3">
-                <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                  a.severity === "high" ? "bg-danger" : a.severity === "medium" ? "bg-warning" : "bg-success"
-                }`} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold">{a.student}</p>
-                    <span className="text-[10px] text-muted-foreground">{a.time}</span>
+            {alerts.slice(0, 4).map((a: any) => {
+              const severity = a.severity || "low";
+              return (
+                <div 
+                  key={a.id} 
+                  onClick={() => {
+                    // Navigate to student profile if the student matches a database record
+                    // Find matching student
+                    const matchedStudent = atRisk.find(s => s.name === a.student);
+                    if (matchedStudent) {
+                      navigate({ to: "/students/$id", params: { id: matchedStudent.id } });
+                    } else {
+                      navigate({ to: "/students" });
+                    }
+                  }}
+                  className="flex items-start gap-3 rounded-xl border border-border bg-background/40 p-3 cursor-pointer hover:border-primary/50 transition-colors"
+                >
+                  <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                    severity === "high" ? "bg-danger" : severity === "medium" ? "bg-warning" : "bg-success"
+                  }`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-semibold">{a.student}</p>
+                      <span className="text-[10px] text-muted-foreground">{a.time}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{a.message}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">{a.message}</p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -186,7 +260,11 @@ function Dashboard() {
           </div>
           <div className="space-y-2">
             {atRisk.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-xl border border-border bg-background/40 p-2.5">
+              <div 
+                key={s.id} 
+                onClick={() => navigate({ to: "/students/$id", params: { id: s.id } })}
+                className="flex items-center gap-3 rounded-xl border border-border bg-background/40 p-2.5 cursor-pointer hover:border-primary/50 transition-colors"
+              >
                 <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-primary text-xs font-bold text-primary-foreground">
                   {s.avatar}
                 </div>
@@ -196,7 +274,7 @@ function Dashboard() {
                 </div>
                 <span
                   className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
-                  style={{ background: riskColors[s.risk] }}
+                  style={{ background: riskColors[s.risk] || riskColors.low }}
                 >
                   {s.risk}
                 </span>

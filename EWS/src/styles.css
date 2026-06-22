@@ -1,10 +1,9 @@
-@import "tailwindcss" source(none);
-@source "../src";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Kantumruy+Pro:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tw-animate-css";
+@import "tailwindcss" source(none);
+
+@source "../src";
+@custom-variant dark (&:is(.dark *));
 
 /*
  * Design system definition.

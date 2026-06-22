@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useI18n } from "@/lib/i18n";
-import { trendData, attendanceByGrade } from "@/lib/mock";
+import { useState, useEffect } from "react";
+import { getAnalyticsData } from "@/lib/api";
+import { Loader2, AlertCircle } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -28,6 +30,48 @@ const radarData = [
 
 function AnalyticsPage() {
   const { t } = useI18n();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await getAnalyticsData();
+        setData(res);
+        setError(null);
+      } catch (err: any) {
+        console.error(err);
+        setError("Failed to fetch analytics statistics. Ensure backend is running.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, []);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex h-80 flex-col items-center justify-center text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">Generating live analytics...</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center p-8 text-center rounded-2xl border border-danger/20 bg-danger/10 text-danger">
+          <AlertCircle className="h-10 w-10 mb-2" />
+          <p className="font-semibold">{error || "Analytics data not found."}</p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="mb-6">
@@ -35,12 +79,29 @@ function AnalyticsPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t.analytics.subtitle}</p>
       </div>
 
+      {/* KPI Cards Grid */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 mb-6">
+        {[
+          { label: "Active Student Profiles", value: data.kpis.total },
+          { label: "High Risk Students", value: data.kpis.high, color: "text-rose-500" },
+          { label: "Medium Risk Students", value: data.kpis.medium, color: "text-amber-500" },
+          { label: "Safe / Low Risk", value: data.kpis.low, color: "text-emerald-500" },
+          { label: "Overall Attendance Rate", value: `${data.kpis.attendance}%` },
+          { label: "Average Class Score", value: `${data.kpis.avgScore}/100` },
+        ].map((kpi, idx) => (
+          <div key={idx} className="rounded-xl border border-border bg-card p-4 shadow-card">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-1">{kpi.label}</div>
+            <div className={`text-2xl font-bold font-display ${kpi.color || ""}`}>{kpi.value}</div>
+          </div>
+        ))}
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-          <h3 className="mb-2 font-display text-lg font-semibold">Risk Trajectory</h3>
+          <h3 className="mb-2 font-display text-lg font-semibold">Risk Trajectory ( Cambodian System )</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData}>
+              <LineChart data={data.trendData}>
                 <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" stroke="var(--color-muted-foreground)" fontSize={11} />
                 <YAxis stroke="var(--color-muted-foreground)" fontSize={11} />
@@ -73,10 +134,10 @@ function AnalyticsPage() {
           <h3 className="mb-2 font-display text-lg font-semibold">Attendance by Grade</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={attendanceByGrade}>
+              <BarChart data={data.attendanceByGrade}>
                 <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="grade" stroke="var(--color-muted-foreground)" fontSize={11} />
-                <YAxis domain={[70, 100]} stroke="var(--color-muted-foreground)" fontSize={11} />
+                <YAxis domain={[0, 100]} stroke="var(--color-muted-foreground)" fontSize={11} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="rate" fill="oklch(0.7 0.15 195)" radius={[8, 8, 0, 0]} />
               </BarChart>
