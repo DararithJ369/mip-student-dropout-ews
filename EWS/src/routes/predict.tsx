@@ -182,6 +182,11 @@ function PredictPage() {
     { value: "Medium", label: lang === "en" ? "Medium" : "មធ្យម" },
   ];
 
+  const yesNoOptions = [
+    { value: "Yes", label: lang === "en" ? "Yes" : "បាទ/ចាស" },
+    { value: "No", label: lang === "en" ? "No" : "ទេ" },
+  ];
+
   const handlePredict = async () => {
     setLoading(true);
     setError(null);

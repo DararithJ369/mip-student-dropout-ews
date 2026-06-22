@@ -94,7 +94,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </div>
               <button
                 onClick={() => setLang(lang === "en" ? "km" : "en")}
-                className="flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs font-semibold hover:border-primary"
+                className="ml-auto flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-3 text-xs font-semibold hover:border-primary"
               >
                 <Languages className="h-4 w-4" />
                 {lang === "en" ? "EN" : "ខ្មែរ"}

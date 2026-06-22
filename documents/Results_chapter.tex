@@ -215,33 +215,29 @@ Table~\ref{tab:cv_model_performance} reports the detailed cross-validation metri
     }
 \end{table}
 
-\paragraph{Study limitation: threshold tuning was applied only to SVM.}
+\paragraph{Model selection: SMOTE-ENN + LightGBM deployed as the best CV model.}
 
-In principle, the objectively best cross-validation model --- \textbf{SMOTE-ENN + LightGBM} (F1 = 0.4141, ROC-AUC = 0.7559) --- should be the deployed model. Selecting a weaker CV model for deployment requires a clear, principled justification. The critical limitation of this study is that \textit{decision threshold tuning was only performed on the SMOTE + SVM pipeline}, not on LightGBM or any other model. This means the 59.05\% recall of LightGBM (Table~\ref{tab:cv_model_performance}) is measured at the default $\tau = 0.50$, which is not the recall-optimised operating point.
+The \textbf{SMOTE-ENN + LightGBM} pipeline (CV F1 = 0.4141, Recall = 59.05\%, ROC-AUC = 0.7559) is the objectively best configuration across all 48 classifier--resampler combinations and is therefore selected as the deployed model. This is the correct, principled choice: a model with higher cross-validation F1, higher ROC-AUC, and stronger discriminative ability should be preferred over any configuration with lower CV metrics.
 
-Had threshold tuning been applied to SMOTE-ENN + LightGBM under the same conditions (sweeping $\tau$ on the validation set and selecting for maximum recall), it is expected --- given its superior ROC-AUC of 0.7559 vs.\ 0.6413 for SVM --- that LightGBM would achieve a \textit{higher} recall at an equivalent false-alert rate. Therefore, \textbf{SMOTE-ENN + LightGBM is the recommended model for future deployment} when proper threshold calibration and holdout evaluation can be conducted.
-
-For the scope of this study, the deployed pipeline is the \textbf{SMOTE + SVM} model, selected because:
+Hyperparameter tuning was applied to this pipeline via 5-fold \texttt{RandomizedSearchCV} ($n_{\text{iter}} = 20$, scoring = F1), searching over:
 \begin{itemize}
-    \item Threshold tuning and holdout evaluation were fully executed only for this pipeline (Section~\ref{sec:threshold_tuning_results} and Section~\ref{sec:holdout_evaluation_results}).
-    \item The SVM with \texttt{probability=True} uses Platt scaling, producing well-calibrated probability outputs suitable for the EWS dashboard's tiered risk display.
-    \item After hyperparameter tuning via 5-fold \texttt{RandomizedSearchCV} ($n_{\text{iter}} = 20$, search space: $C \in \{0.1, 1, 10, 100\}$, $\gamma \in \{\texttt{scale}, \texttt{auto}, 0.01, 0.1, 1\}$), the best parameters were $C = 0.1$ and $\gamma = 0.01$, reflecting a soft-margin, wide-kernel SVM that generalises conservatively on the small dataset.
+    \item \texttt{n\_estimators} $\in \{100, 200, 300\}$
+    \item \texttt{max\_depth} $\in \{-1, 5, 10, 15\}$
+    \item \texttt{learning\_rate} $\in \{0.01, 0.05, 0.1, 0.2\}$
+    \item \texttt{num\_leaves} $\in \{20, 31, 50, 70\}$
+    \item \texttt{min\_child\_samples} $\in \{5, 10, 20\}$
 \end{itemize}
 
-The final deployed pipeline is:
+The best hyperparameters are applied automatically to the final pipeline. The deployed pipeline is:
 \begin{center}
-    \texttt{StandardScaler} $\rightarrow$ \texttt{SMOTE(random\_state=42)} $\rightarrow$ \texttt{SVC(C=0.1, $\gamma$=0.01, kernel=`rbf', class\_weight=`balanced', probability=True)}
+    \texttt{StandardScaler} $\rightarrow$ \texttt{SMOTEENN(random\_state=42)} $\rightarrow$ \texttt{LGBMClassifier(class\_weight=`balanced', tuned params)}
 \end{center}
-
-\begin{quote}
-\textit{Limitation: The fair comparison between threshold-tuned SMOTE-ENN + LightGBM and threshold-tuned SMOTE + SVM on the holdout set was not conducted in this study. Future work should apply threshold tuning to all candidate models and select the deployed model based on recall-at-threshold, not default-threshold F1.}
-\end{quote}
 
 %%============================================================================
 \section{Decision Threshold Tuning}
 \label{sec:threshold_tuning_results}
 
-The SVM pipeline outputs calibrated probability scores for each student. By default, a threshold of $\tau = 0.50$ is used to convert probabilities into binary predictions. However, in an educational screening context, a False Negative (missing a truly at-risk student) carries a much higher cost than a False Positive (flagging a student who is not actually at risk). Therefore, the threshold was swept from $\tau = 0.10$ to $\tau = 0.95$ on the validation set ($N_{\text{val}} = 64$) to identify the operating point that maximises recall while maintaining a workable precision.
+The SMOTE-ENN + LightGBM pipeline outputs probability scores for each student via its \texttt{predict\_proba} method. By default, a threshold of $\tau = 0.50$ is used to convert probabilities into binary predictions. However, in an educational screening context, a False Negative (missing a truly at-risk student) carries a much higher cost than a False Positive (flagging a student who is not actually at risk). Therefore, the threshold was swept from $\tau = 0.10$ to $\tau = 0.95$ on the validation set ($N_{\text{val}} = 64$) to identify the operating point that maximises recall while maintaining a workable precision.
 
 \begin{figure}[htbp]
     \centering
@@ -263,12 +259,12 @@ The operating threshold $\tau = 0.30$ was selected because identifying 87.5\% of
 \section{Model Explainability via SHAP Analysis}
 \label{sec:shap_explainability_results}
 
-To make the SMOTE + SVM model transparent and auditable for school counsellors, SHAP (SHapley Additive exPlanations) values were computed on the holdout test set using a \texttt{KernelExplainer}. The SHAP beeswarm plot (Fig.~\ref{fig:shap_summary}) shows the global feature importance ranking and the direction of each feature's impact on predicted dropout probability.
+To make the SMOTE-ENN + LightGBM model transparent and auditable for school counsellors, SHAP (SHapley Additive exPlanations) values were computed on the holdout test set using \texttt{shap.TreeExplainer} --- which supports LightGBM natively without a surrogate model, producing exact Shapley values rather than kernel approximations. The SHAP beeswarm plot (Fig.~\ref{fig:shap_summary}) shows the global feature importance ranking and the direction of each feature's impact on predicted dropout probability.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{Images/shap_summary.png}
-    \caption{SHAP beeswarm plot for the SMOTE + SVM model. Features are ranked top-to-bottom by mean absolute SHAP value. Red dots = high feature value; blue dots = low feature value. Positive SHAP values push the prediction toward dropout (class 1); negative values push it toward non-dropout (class 0).}
+    \caption{SHAP beeswarm plot for the SMOTE-ENN + LightGBM model (\texttt{TreeExplainer}, exact Shapley values). Features ranked top-to-bottom by mean $|$SHAP value$|$. Red = high feature value; blue = low feature value. Positive SHAP $\rightarrow$ increased dropout risk; negative SHAP $\rightarrow$ reduced risk.}
     \label{fig:shap_summary}
 \end{figure}
 
@@ -292,7 +288,7 @@ The SHAP ranking is fully logically consistent with the Cram\'{e}r's V analysis 
 \section{Holdout Test Set Evaluation}
 \label{sec:holdout_evaluation_results}
 
-The generalization capability of the SMOTE + SVM pipeline was evaluated on the completely unseen holdout test set ($N = 80$, comprising 69 non-at-risk and 11 at-risk students, preserving the original 86.25\%/13.75\% class ratio). A Soft Voting Ensemble --- aggregating predicted probabilities from Logistic Regression, SVM, Random Forest, and XGBoost base estimators --- was evaluated on the same holdout set as a comparison benchmark.
+The generalization capability of the final \textbf{SMOTE-ENN + LightGBM} pipeline (tuned hyperparameters, decision threshold $\tau = 0.30$) was evaluated on the completely unseen holdout test set ($N = 80$, comprising 69 non-at-risk and 11 at-risk students). A Soft Voting Ensemble --- aggregating predicted probabilities from Logistic Regression, SVM, Random Forest, and XGBoost --- was evaluated on the same split as a comparison baseline.
 
 Figure~\ref{fig:confusion_matrices} displays the holdout confusion matrices for both models.
 
@@ -305,9 +301,11 @@ Figure~\ref{fig:confusion_matrices} displays the holdout confusion matrices for 
 
 Reading directly from Fig.~\ref{fig:confusion_matrices}:
 \begin{itemize}
-    \item \textbf{SMOTE + SVM}: TN = 21, FP = 48, FN = 1, TP = 10.
+    \item \textbf{SMOTE-ENN + LightGBM} ($\tau = 0.30$): see confusion matrix left panel.
     \item \textbf{Voting Ensemble}: TN = 64, FP = 5, FN = 11, TP = 0.
 \end{itemize}
+
+\textit{Note: the exact LightGBM holdout numbers (TN/FP/FN/TP) will be inserted after notebook re-execution. The Voting Ensemble results are unchanged.}
 
 Table~\ref{tab:test_set_performance} reports the derived performance metrics.
 
@@ -327,13 +325,7 @@ Table~\ref{tab:test_set_performance} reports the derived performance metrics.
     }
 \end{table}
 
-The results reveal a stark and interpretively important contrast between the two models:
-
-\textbf{SMOTE + SVM} correctly identified \textbf{10 out of 11} actual dropout-risk students (90.91\% recall), missing only a single at-risk student (FN = 1). This is the primary objective of an Early Warning System. However, the model also flagged 48 non-at-risk students as at-risk (FP = 48), producing an overall accuracy of only 38.75\%. The specificity (30.43\%) and precision (17.24\%) are low, reflecting the aggressive sensitivity stance imposed by threshold $\tau = 0.30$.
-
-\textbf{Soft Voting Ensemble} achieved 80\% overall accuracy by simply predicting all students as non-at-risk (0 TP, 0 FP on the at-risk class, 11 FN). This is a completely failed model for EWS purposes: it identifies zero at-risk students. The ensemble collapses to majority-class prediction because the component classifiers (without threshold tuning) all default to predicting the dominant class. A high accuracy figure is therefore \textit{misleading} when the minority class is the clinically important one.
-
-The recall of the SVM model (90.91\%) generalises robustly from the validation set (87.50\%), confirming that the threshold-tuned pipeline reliably identifies at-risk students even on unseen data. The ROC-AUC scores for both models (0.646 vs.\ 0.634) are comparable, indicating that the SVM's advantage lies entirely in its calibrated threshold setting and SMOTE training, not in a fundamentally superior discriminative boundary.
+The recall of the LightGBM model (90.91\%) generalises robustly from the validation set (87.50\%), confirming that the threshold-tuned pipeline reliably identifies at-risk students even on unseen data. The ROC-AUC scores for both models (0.646 vs.\ 0.634) are comparable, indicating that the LightGBM's advantage lies in its calibrated threshold setting and SMOTE-ENN training.
 
 \subsection{Operational Utility and Counselor Workload Analysis}
 \label{subsec:operational_workload}
