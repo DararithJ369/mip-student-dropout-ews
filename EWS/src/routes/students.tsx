@@ -9,9 +9,9 @@ import { students } from "@/lib/mock";
 export const Route = createFileRoute("/students")({ component: StudentsPage });
 
 const riskColors: Record<string, string> = {
-  low: "oklch(0.75 0 0)",
-  medium: "oklch(0.5 0 0)",
-  high: "oklch(0.2 0 0)",
+  low: "oklch(0.65 0.17 155)",
+  medium: "oklch(0.78 0.16 75)",
+  high: "oklch(0.62 0.22 25)",
 };
 
 function StudentsPage() {

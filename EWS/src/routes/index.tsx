@@ -16,9 +16,9 @@ import { kpis, trendData, distribution, attendanceByGrade, alerts, students } fr
 export const Route = createFileRoute("/")({ component: Dashboard });
 
 const riskColors: Record<string, string> = {
-  low: "oklch(0.75 0 0)",
-  medium: "oklch(0.5 0 0)",
-  high: "oklch(0.2 0 0)",
+  low: "oklch(0.65 0.17 155)",
+  medium: "oklch(0.78 0.16 75)",
+  high: "oklch(0.62 0.22 25)",
 };
 
 function Dashboard() {

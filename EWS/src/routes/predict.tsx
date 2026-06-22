@@ -513,19 +513,19 @@ function ResultPanel({
     low: {
       bg: "bg-gradient-success",
       text: "text-muted-foreground",
-      ring: "stroke-[oklch(0.8_0_0)]",
+      ring: "stroke-[oklch(0.65_0.17_155)]",
       icon: ShieldCheck,
     },
     medium: {
       bg: "bg-gradient-warning",
       text: "text-foreground",
-      ring: "stroke-[oklch(0.5_0_0)]",
+      ring: "stroke-[oklch(0.78_0.16_75)]",
       icon: AlertCircle,
     },
     high: {
       bg: "bg-gradient-danger",
       text: "text-foreground",
-      ring: "stroke-[oklch(0.2_0_0)]",
+      ring: "stroke-[oklch(0.62_0.22_25)]",
       icon: AlertTriangle,
     },
   } as const;
