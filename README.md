@@ -19,9 +19,9 @@ The project evaluates multiple resamplers and classifiers to address high class 
 | Original | GradBoost | 0.879 | 0.205 | 0.308 | 0.696 | |
 
 ### Key Findings & Deployment Decision:
-* **Recommendation**: **SMOTE-ENN + LightGBM** was selected as the superior model. It provides the highest cross-validation F1-score (0.414) and ROC-AUC (0.756), significantly outperforming the SVM baseline.
-* **Tuning**: A decision threshold of $\tau = 0.30$ was determined to maximize recall, enabling early identification of at-risk students.
-* **SHAP Explainability**: Integrates a `TreeExplainer` built natively on LightGBM to explain individual dropout risk factors.
+* **Deployment Choice**: **SMOTE + SVM (SVC)** is deployed in production. It offers a solid balance of accuracy (0.742), recall (0.443), and F1-score (0.314) on the resampled training space.
+* **Tuning**: A tuned decision threshold of $\tau = 0.30$ is utilized in production to maximize recall and ensure early identification of at-risk profiles.
+* **SHAP Explainability**: Integrates a SHAP explainer to provide real-time, explainable risk factors dynamically on the dashboard.
 
 ---
 
@@ -94,7 +94,7 @@ student-dropout/
 ├── EWS/                      # Web Application Directory
 │   ├── backend/              # FastAPI Backend
 │   │   ├── app/
-│   │   │   ├── models/       # LightGBM Classifier & SHAP Explainer
+│   │   │   ├── models/       # SVM Classifier & SHAP Explainer
 │   │   │   ├── routes/       # API endpoints
 │   │   │   ├── schemas/      # Pydantic input/output schemas
 │   │   │   └── services/     # Preprocessing, Feature Engineering & SHAP service
@@ -103,6 +103,6 @@ student-dropout/
 │   └── src/                  # React Frontend Code (TS & TanStack Router)
 ├── data/                     # Dataset storage
 ├── documents/                # Thesis chapters and reference papers
-├── models/                   # Serialized Python Model Pickles (Restored LightGBM)
+├── models/                   # Serialized Python Model Pickles (Restored SVM)
 └── notebooks/                # Jupyter Notebooks detailing ML exploration
 ```
