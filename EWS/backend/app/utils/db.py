@@ -3,11 +3,81 @@ import os
 import json
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "student_dropout.db")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Conditional postgres wrapper classes
+class PostgresCursorWrapper:
+    def __init__(self, cursor):
+        self.cursor = cursor
+
+    def execute(self, query, params=None):
+        # 1. Translate SQLite '?' query parameters to PostgreSQL '%s'
+        translated_query = query.replace("?", "%s")
+        
+        # 2. Translate table creation types (AUTOINCREMENT -> SERIAL)
+        if "INTEGER PRIMARY KEY AUTOINCREMENT" in translated_query:
+            translated_query = translated_query.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+        
+        if params is not None:
+            self.cursor.execute(translated_query, params)
+        else:
+            self.cursor.execute(translated_query)
+
+    def fetchone(self):
+        return self.cursor.fetchone()
+
+    def fetchall(self):
+        return self.cursor.fetchall()
+
+    def close(self):
+        self.cursor.close()
+
+    def __iter__(self):
+        return iter(self.cursor)
+
+    @property
+    def rowcount(self):
+        return self.cursor.rowcount
+
+    @property
+    def description(self):
+        return self.cursor.description
+
+class PostgresConnectionWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+
+    def cursor(self):
+        import psycopg2.extras
+        # Using DictCursor so rows behave like dictionaries/lists (like sqlite3.Row)
+        cursor = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        return PostgresCursorWrapper(cursor)
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
 
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE_URL:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(DATABASE_URL)
+            return PostgresConnectionWrapper(conn)
+        except ImportError:
+            raise ImportError(
+                "psycopg2 is not installed but DATABASE_URL was specified. "
+                "Please run 'pip install psycopg2-binary' to connect to PostgreSQL."
+            )
+    else:
+        # Fallback to SQLite
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     conn = get_db_connection()
@@ -98,4 +168,7 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
-    print("Database initialized successfully at:", DB_PATH)
+    if DATABASE_URL:
+        print("Database initialized successfully on PostgreSQL!")
+    else:
+        print("Database initialized successfully at:", DB_PATH)

@@ -8,3 +8,4 @@ lightgbm
 imbalanced-learn
 joblib
 shap
+psycopg2-binary
