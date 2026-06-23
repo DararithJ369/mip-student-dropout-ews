@@ -84,7 +84,31 @@ Start the development server:
 bun run dev
 # Or: npm run dev
 ```
-Open `http://localhost:3000` in your browser.
+Open `http://localhost:8081` in your browser.
+
+---
+
+## 🌐 Production Deployment & URLs
+
+The application is deployed in production under the following environments:
+* **Backend API (Render)**: `https://mip-student-dropout-ews.onrender.com`
+* **Frontend Dashboard (Cloudflare Workers)**: `https://student-dropout-ews.kimputdararith.workers.dev`
+
+### 🔧 Environment Configuration
+For local development, the frontend needs to point to the local backend.
+* **Local Setup**: Create a `EWS/.env` or `EWS/.env.local` file containing:
+  ```env
+  VITE_API_URL=http://127.0.0.1:8000
+  ```
+* **Production Build**: In production (where `.env` is gitignored), the frontend automatically falls back to querying the production Render backend (`https://mip-student-dropout-ews.onrender.com`).
+
+### 🚀 Manual Cloudflare Deployment
+To deploy frontend changes to production:
+```bash
+cd EWS
+VITE_API_URL=https://mip-student-dropout-ews.onrender.com npm run build
+npx wrangler deploy
+```
 
 ---
 
