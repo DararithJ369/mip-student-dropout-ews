@@ -10,10 +10,24 @@ from app.utils.db import init_db
 
 app = FastAPI(title="Student Dropout Predictor")
 
-# Initialize SQLite database on startup
+# Initialize and auto-seed database on startup if empty
 @app.on_event("startup")
 def on_startup():
     init_db()
+    try:
+        from app.utils.db import get_db_connection
+        from app.utils.seed import seed_db
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM students")
+        count = cursor.fetchone()[0]
+        conn.close()
+        
+        if count == 0:
+            print("Database is empty on startup. Running auto-seeding...")
+            seed_db()
+    except Exception as e:
+        print(f"Auto-seeding on startup failed: {e}")
 
 app.add_middleware(
     CORSMiddleware,
