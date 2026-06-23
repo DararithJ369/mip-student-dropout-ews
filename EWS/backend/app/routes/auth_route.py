@@ -14,7 +14,7 @@ def login(req: LoginRequest):
     cursor = conn.cursor()
     
     # Query user
-    cursor.execute("SELECT * FROM users WHERE username = ?", (req.username,))
+    cursor.execute("SELECT * FROM ews_users WHERE username = ?", (req.username,))
     user = cursor.fetchone()
     conn.close()
     

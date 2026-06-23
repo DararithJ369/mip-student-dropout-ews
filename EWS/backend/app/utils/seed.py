@@ -21,7 +21,7 @@ def seed_db():
     # 1. Seed users
     print("Seeding users...")
     # Clear existing users
-    cursor.execute("DELETE FROM users")
+    cursor.execute("DELETE FROM ews_users")
     
     users_data = [
         ("admin", "admin123", "admin", "System Administrator"),
@@ -33,7 +33,7 @@ def seed_db():
         # Simple plain password hash or simulated hash
         password_hash = f"sha256_simulated_{password}"
         cursor.execute(
-            "INSERT INTO users (username, password_hash, role, name) VALUES (?, ?, ?, ?)",
+            "INSERT INTO ews_users (username, password_hash, role, name) VALUES (?, ?, ?, ?)",
             (username, password_hash, role, name)
         )
     

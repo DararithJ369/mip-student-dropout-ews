@@ -37,6 +37,24 @@ def get_analytics():
             "rate": round(g[1], 1) if g[1] else 0.0
         })
         
+    # 3. Province data
+    cursor.execute("""
+        SELECT province, 
+               COUNT(*) as student_count, 
+               AVG(dropout_probability) as avg_risk,
+               COUNT(CASE WHEN risk_level = 'High Risk' THEN 1 END) as high_risk_count
+        FROM students 
+        GROUP BY province
+    """)
+    province_rows = cursor.fetchall()
+    province_data = {}
+    for p in province_rows:
+        province_data[p[0]] = {
+            "student_count": p[1],
+            "avg_risk": round(p[2] * 100, 1) if p[2] else 0.0,
+            "high_risk_count": p[3]
+        }
+        
     conn.close()
     
     # Dynamic trend data scaled down to database levels
@@ -71,5 +89,6 @@ def get_analytics():
             { "grade": "G8", "rate": 90.7 },
             { "grade": "G9", "rate": 88.4 }
         ],
-        "distribution": distribution
+        "distribution": distribution,
+        "provinceData": province_data
     }

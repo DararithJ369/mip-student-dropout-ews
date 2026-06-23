@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
+import { CambodiaMap } from "@/components/CambodiaMap";
 import { useI18n } from "@/lib/i18n";
 import { useState, useEffect } from "react";
 import { getAnalyticsData } from "@/lib/api";
@@ -145,21 +146,7 @@ function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
-          <h3 className="mb-3 font-display text-lg font-semibold">Risk Heatmap</h3>
-          <div className="grid grid-cols-12 gap-1.5">
-            {Array.from({ length: 84 }).map((_, i) => {
-              const v = ((i * 53 + 17) % 100) / 100;
-              const c = v > 0.85 ? "oklch(0.62 0.22 25)" : v > 0.65 ? "oklch(0.78 0.16 75)" : v > 0.4 ? "oklch(0.65 0.17 155 / 0.55)" : "oklch(0.65 0.17 155 / 0.25)";
-              return <div key={i} className="aspect-square rounded-md" style={{ background: c }} />;
-            })}
-          </div>
-          <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.65 0.17 155)" }} />Safe</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.78 0.16 75)" }} />Warning</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm" style={{ background: "oklch(0.62 0.22 25)" }} />High Risk</span>
-          </div>
-        </div>
+        <CambodiaMap provinceData={data.provinceData || {}} />
       </div>
     </AppLayout>
   );
