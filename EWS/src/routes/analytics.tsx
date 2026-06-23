@@ -136,11 +136,17 @@ function AnalyticsPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.attendanceByGrade}>
+                <defs>
+                  <linearGradient id="attendanceBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.55 0.18 265)" stopOpacity={0.85} />
+                    <stop offset="100%" stopColor="oklch(0.55 0.18 265)" stopOpacity={0.25} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="grade" stroke="var(--color-muted-foreground)" fontSize={11} />
                 <YAxis domain={[0, 100]} stroke="var(--color-muted-foreground)" fontSize={11} />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="rate" fill="oklch(0.7 0.15 195)" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="rate" fill="url(#attendanceBarGrad)" stroke="oklch(0.55 0.18 265)" strokeWidth={1.5} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

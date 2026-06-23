@@ -27,15 +27,15 @@ export function CambodiaMap({ provinceData }: CambodiaMapProps) {
 
   const getProvinceColor = (stats: { student_count: number; avg_risk: number; high_risk_count: number }) => {
     if (stats.student_count === 0) {
-      return "fill-muted/20 stroke-border/40 hover:fill-muted/40";
+      return "fill-muted/20 stroke-border/60 hover:fill-muted/40";
     }
     const risk = stats.avg_risk;
     if (risk < 40) {
-      return "fill-success/20 stroke-success/70 hover:fill-success/40";
+      return "fill-success/20 stroke-success hover:fill-success/40";
     } else if (risk < 70) {
-      return "fill-warning/25 stroke-warning/70 hover:fill-warning/50";
+      return "fill-warning/25 stroke-warning hover:fill-warning/50";
     } else {
-      return "fill-danger/30 stroke-danger/80 hover:fill-danger/60";
+      return "fill-danger/30 stroke-danger hover:fill-danger/60";
     }
   };
 
@@ -88,7 +88,7 @@ export function CambodiaMap({ provinceData }: CambodiaMapProps) {
               <path
                 key={loc.id}
                 d={loc.path}
-                className={`cursor-pointer transition-all duration-300 stroke-[1.2px] outline-none ${colorClass}`}
+                className={`cursor-pointer transition-all duration-300 stroke-[1.8px] outline-none ${colorClass}`}
                 onMouseMove={(e) => handleMouseMove(e, loc)}
                 onMouseLeave={() => setHovered(null)}
                 style={{
