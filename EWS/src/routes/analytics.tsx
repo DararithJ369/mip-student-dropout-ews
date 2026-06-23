@@ -41,6 +41,14 @@ function AnalyticsPage() {
         const res = await getAnalyticsData();
         setData(res);
         setError(null);
+        
+        // Print trigger for reports redirect
+        if (sessionStorage.getItem("print_analytics") === "true") {
+          sessionStorage.removeItem("print_analytics");
+          setTimeout(() => {
+            window.print();
+          }, 800);
+        }
       } catch (err: any) {
         console.error(err);
         setError("Failed to fetch analytics statistics. Ensure backend is running.");
