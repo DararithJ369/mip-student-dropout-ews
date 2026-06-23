@@ -20,6 +20,21 @@ function ReportsPage() {
   const [loadingReport, setLoadingReport] = useState<string | null>(null);
   const [printStudents, setPrintStudents] = useState<any[]>([]);
 
+  const formatRiskLevel = (risk: string) => {
+    if (!risk) return "Low Risk";
+    const r = risk.toLowerCase();
+    if (r.startsWith("high")) return "High Risk";
+    if (r.startsWith("med")) return "Medium Risk";
+    return "Low Risk";
+  };
+
+  const getRiskColorClass = (risk: string) => {
+    const r = (risk || "").toLowerCase();
+    if (r.startsWith("high")) return "text-red-600";
+    if (r.startsWith("med")) return "text-amber-600";
+    return "text-green-600";
+  };
+
   const downloadCSV = (filename: string, headers: string[], rows: any[][]) => {
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
@@ -190,7 +205,9 @@ function ReportsPage() {
                   <td className="py-2.5 pr-2">{s.province}</td>
                   <td className="py-2.5 pr-2">{s.attendance_rate || s.attendance}%</td>
                   <td className="py-2.5 pr-2">{s.score}/100</td>
-                  <td className="py-2.5 text-right font-bold">{s.risk_level || s.risk}</td>
+                  <td className={`py-2.5 text-right font-bold ${getRiskColorClass(s.risk_level || s.risk)}`}>
+                    {formatRiskLevel(s.risk_level || s.risk)}
+                  </td>
                 </tr>
               ))}
             </tbody>
