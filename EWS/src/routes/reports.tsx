@@ -52,19 +52,20 @@ function ReportsPage() {
     try {
       if (reportName === "Intervention Report") {
         const data = await getInterventionsData();
-        if (!data || !data.length) {
+        const list = data?.interventions || [];
+        if (!list || !list.length) {
           alert("No interventions recorded in database to export.");
           return;
         }
         const headers = ["ID", "Student ID", "Action", "Severity", "Status", "Assigned By", "Date", "Notes"];
-        const rows = data.map((item: any) => [
+        const rows = list.map((item: any) => [
           item.id,
-          item.student_id,
+          item.studentId,
           item.action,
           item.severity,
           item.status,
-          item.assigned_by,
-          item.assigned_date,
+          item.assignedBy,
+          item.assignedDate,
           item.notes || ""
         ]);
         downloadCSV("intervention_report.csv", headers, rows);
