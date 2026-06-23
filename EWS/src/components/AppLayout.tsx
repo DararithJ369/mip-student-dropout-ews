@@ -37,7 +37,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl lg:flex lg:flex-col">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-sidebar-border bg-sidebar/80 backdrop-blur-xl lg:flex lg:flex-col print:hidden">
           <div className="flex items-center gap-3 px-6 py-6">
             <div className="relative grid h-10 w-10 place-items-center rounded-xl bg-gradient-primary shadow-glow">
               <Shield className="h-5 w-5 text-primary-foreground" strokeWidth={2.5} />
@@ -89,7 +89,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Main */}
         <div className="min-w-0 flex-1">
           {/* Topbar */}
-          <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl">
+          <header className="sticky top-0 z-30 border-b border-border bg-background/70 backdrop-blur-xl print:hidden">
             <div className="flex h-16 items-center gap-3 px-4 md:px-8">
               <div className="relative flex-1 max-w-md">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

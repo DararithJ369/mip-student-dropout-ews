@@ -226,10 +226,35 @@ function StudentProfile() {
 
   return (
     <AppLayout>
+      <style>{`
+        @media print {
+          body {
+            background-color: white !important;
+            color: black !important;
+            font-size: 12px !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .border, .rounded-3xl, .rounded-2xl, .bg-card {
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: none !important;
+            background: none !important;
+          }
+          .shadow-elevated, .shadow-card, .shadow-glow {
+            box-shadow: none !important;
+          }
+          .print-avoid-break {
+            page-break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
       {/* Back link */}
       <Link
         to="/students"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground print:hidden"
       >
         <ArrowLeft className="h-4 w-4" /> Back to students
       </Link>
@@ -270,12 +295,18 @@ function StudentProfile() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 print:hidden">
             <button 
               onClick={() => setIsEditOpen(true)}
               className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-medium hover:border-primary cursor-pointer"
             >
               <Edit3 className="h-4 w-4" /> Edit Profile
+            </button>
+            <button 
+              onClick={() => window.print()}
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-medium hover:border-primary cursor-pointer"
+            >
+              <Download className="h-4 w-4" /> PDF Report Card
             </button>
             <button 
               onClick={() => setIsDeleteConfirmOpen(true)}
