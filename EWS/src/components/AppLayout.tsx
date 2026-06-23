@@ -4,7 +4,9 @@ import {
   LayoutDashboard, Users, Brain, Bell, BarChart3, HeartHandshake, FileText, Settings,
   Moon, Sun, Languages, Search, Shield, Sparkles, ShieldCheck,
 } from "lucide-react";
+import { useState } from "react";
 import type { ReactNode } from "react";
+import { AiAssistantDrawer } from "@/components/AiAssistantDrawer";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useI18n();
   const { theme, toggle } = useTheme();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
   const nav = [
     { to: "/", icon: LayoutDashboard, label: t.nav.dashboard },
@@ -68,7 +71,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             })}
           </nav>
 
-          <div className="m-3 rounded-2xl border border-sidebar-border bg-gradient-to-br from-card to-sidebar-accent p-4">
+          <div 
+            onClick={() => setAssistantOpen(true)}
+            className="m-3 rounded-2xl border border-sidebar-border bg-gradient-to-br from-card to-sidebar-accent p-4 cursor-pointer hover:border-accent/40 hover:shadow-sm active:scale-[0.98] transition-all"
+          >
             <div className="flex items-center gap-2 text-xs font-semibold text-accent">
               <Sparkles className="h-3.5 w-3.5" /> AI Assistant
             </div>
@@ -122,6 +128,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <main className="px-4 py-6 md:px-8 md:py-8">{children}</main>
         </div>
       </div>
+
+      {/* Floating AI Assistant Trigger for mobile/tablets */}
+      {!assistantOpen && (
+        <button
+          onClick={() => setAssistantOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-primary text-primary-foreground shadow-glow hover:scale-105 active:scale-95 transition-all lg:hidden"
+          aria-label="Open AI Assistant"
+        >
+          <Sparkles className="h-6 w-6" />
+        </button>
+      )}
+
+      {/* Slide-out Drawer */}
+      <AiAssistantDrawer isOpen={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
   );
 }

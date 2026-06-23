@@ -117,3 +117,11 @@ export async function updateInterventionStatus(id: number, status: string, notes
     body: JSON.stringify({ status, notes }),
   });
 }
+
+// AI Assistant
+export async function askAssistantApi(message: string) {
+  return apiRequest<{ response: string; data: any }>("/assistant", {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}

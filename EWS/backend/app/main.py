@@ -5,6 +5,7 @@ from app.routes.auth_route import router as auth_router
 from app.routes.students_route import router as students_router
 from app.routes.analytics_route import router as analytics_router
 from app.routes.interventions_route import router as interventions_router
+from app.routes.assistant_route import router as assistant_router
 from app.utils.db import init_db
 
 app = FastAPI(title="Student Dropout Predictor")
@@ -36,3 +37,4 @@ app.include_router(auth_router)
 app.include_router(students_router)
 app.include_router(analytics_router)
 app.include_router(interventions_router)
+app.include_router(assistant_router)
